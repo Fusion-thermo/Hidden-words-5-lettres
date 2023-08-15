@@ -29,16 +29,24 @@ pos_alphabet={'a': (1016,1213), 'z': (1094,1213), 'e': (1172,1213), 'r': (1250,1
 'm': (1718,1316), 'w': (1082,1426), 'x': (1197,1426), 'c': (1312,1426), 'v': (1427,1426), 'b': (1542,1426), 'n': (1657,1426)}
 espace=(1375,1529)
 x0,y0 = 1141,332
-gris=(204,204,204)
-vert=(134,190,153)
-jaune=(244,202,122)
+gris=(205,205,205)
+vert=(134, 190, 153)
+jaune=(244,203,123)
 zone=1
+delai=0.2
 
+def bonne_couleur(mesure, reference, ecart_admissible):
+    correct=True
+    for i in range(3):
+        if abs(mesure[i]-reference[i]) >= ecart_admissible*reference[i]:
+            correct=False
+    return correct
+    
 #main
 compteur=0
 mouse = Controller()
 sleep(2)
-while compteur<2:
+while compteur<10:
     compteur+=1
 
     tentative=0
@@ -54,61 +62,100 @@ while compteur<2:
         mot=liste_mots_actuelle[0]
         for lettre in mot:
             mouse.position = pos_alphabet[lettre]
-            sleep(0.2)
-            #mouse.click(Button.left)
-            #sleep(0.2)
+            sleep(delai)
+            mouse.click(Button.left)
+            sleep(delai)
         mouse.position = espace
-        #sleep(0.2)
-        #mouse.click(Button.left)
-        #sleep(0.2)
+        sleep(delai)
+        mouse.click(Button.left)
+        sleep(2)
         #vérification des couleurs
-        im = ImageGrab.grab(bbox =(x0-zone,y0+(tentative-1)*80-zone,x0+5*80+zone,y0+(tentative-1)*80+zone))
-        im.show()
+        im = ImageGrab.grab(bbox =(x0-zone,y0+(tentative-1)*100-zone,x0+4*100+zone,y0+(tentative-1)*100+zone))
+        #im.show()
         px=im.load()
         nombre_corrects=0
-        print(1)
+        print(tentative)
         for i in range(5):
-            couleur=px[i*80,0]
-            print(couleur)
-            if couleur==gris:
+            couleur=px[i*100,0]
+            #print(couleur)
+            if bonne_couleur(couleur,gris,0.05):
                 non.append(mot[i])
-            elif couleur==vert:
+            elif bonne_couleur(couleur,vert,0.05):
                 nombre_corrects+=1
                 bonne_position[i]=mot[i]
-            elif couleur==jaune:
+            elif bonne_couleur(couleur,jaune,0.05):
                 mauvaise_position[i]=mot[i]
             else:
-                print("erreur")
-        fini=True
-        if nombre_corrects==5:
+                print("erreur",couleur, i)
+        print(non,bonne_position,mauvaise_position)
+        if nombre_corrects==5 or tentative>6:
             fini=True
             break
+        new_liste=[]
         #trier les mots possibles
         for mot in liste_mots_actuelle:
             passer=False
             for lettre in non:
                 if lettre in mot:
-                    liste_mots_actuelle.remove(mot)
+                    #print("non",mot)
                     passer=True
                     break
             if passer:
                 continue
             for indice in bonne_position.keys():
                 if mot[indice] != bonne_position[indice]:
-                    liste_mots_actuelle.remove(mot)
+                    #print("oui",mot)
                     passer=True
                     break
             if passer:
                 continue
             for indice in mauvaise_position.keys():
                 if mot[indice] == mauvaise_position[indice]:
-                    liste_mots_actuelle.remove(mot)
+                    #print("nsp",mot)
                     passer=True
                     break
                 if mot.count(lettre) < [i for i in bonne_position.values()].count(lettre) + [i for i in bonne_position.values()].count(lettre):
-                    liste_mots_actuelle.remove(mot)
+                    #print("nsp",mot)
                     passer=True
                     break
+            if passer:
+                continue
+            new_liste.append(mot)
+        liste_mots_actuelle=new_liste[:]
+        print(liste_mots_actuelle[:10],len(liste_mots_actuelle))
+    #premier clic pour lorsqu'on gagne deuxième pour lorsqu'on perd    
+    sleep(4)
+    mouse.position = (1512,1416)
+    sleep(delai)
+    mouse.click(Button.left)
+    sleep(0.2)
+    mouse.position = (1349,1249)
+    sleep(0.2)
+    mouse.click(Button.left)
+    #vérifions si on a perdu ou gagné
+    # x,y=1512,1416
+    # zone2=3
+    # im = ImageGrab.grab(bbox =(x-zone2,y-zone2,x+zone2,y+zone2))
+    # im.show()
+    # px=im.load()
+    
+    # couleur=px[zone2,zone2]
+    # #print(couleur)
+    # if bonne_couleur(couleur,(239,177,73),0.1):
+    #     #bouton niveau suivant
+    #     print(1111)
+    #     sleep(4)
+    #     mouse.position = (x,y)
+    #     #sleep(delai)
+    #     #mouse.click(Button.left)
+    # else:
+    #     #bouton passer
+    #     sleep(5)
+    #     mouse.position = (1349,1249)
+    #     #sleep(delai)
+    #     #mouse.click(Button.left)
+    #avant le début du jeu
+    sleep(1)
 
 
 
